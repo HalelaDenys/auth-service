@@ -7,8 +7,5 @@
 env/
 venv/
 
-# Node_modules (якщо є фронтенд)
-srm_front/node_modules/
-
 # Лог-файли
 *.log
