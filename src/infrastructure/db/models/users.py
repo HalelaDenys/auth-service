@@ -1,7 +1,12 @@
 from infrastructure import Base
-from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import VARCHAR, Enum as SQLEnum
 from enum import StrEnum
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from infrastructure import RefreshToken
 
 
 class UserRole(StrEnum):
@@ -23,7 +28,7 @@ class User(Base):
         SQLEnum(UserRole, name="user_role", create_type=True),
         nullable=False,
         default=UserRole.user,
-        server_default=UserRole.user.value,  # беремо .value для правильного SQL
+        server_default=UserRole.user.value,
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -31,6 +36,12 @@ class User(Base):
     )
     is_verified: Mapped[bool] = mapped_column(
         default=False, server_default="false", nullable=False
+    )
+
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
