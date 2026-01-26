@@ -3,6 +3,8 @@ from sqlalchemy import Integer, TIMESTAMP, func, MetaData
 from core.config import settings
 from datetime import datetime
 
+from infrastructure.db.util import camel_to_snake
+
 
 class Base(DeclarativeBase):
     __abstract__ = True
@@ -21,7 +23,7 @@ class Base(DeclarativeBase):
     @classmethod
     @declared_attr.directive
     def __tablename__(cls) -> str:
-        return f"{cls.__name__.lower()}s"
+        return camel_to_snake(cls.__name__) + "s"
 
     def to_dict(self) -> dict:
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

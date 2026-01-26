@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from infrastructure import User
-from base_sqlalchemy_repo import BaseSqlalchemyRepo
+from infrastructure.repo.base_sqlalchemy_repo import BaseSqlalchemyRepo
 
 
 class UserRepository(BaseSqlalchemyRepo[User]):
