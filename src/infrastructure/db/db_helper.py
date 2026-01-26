@@ -23,7 +23,7 @@ class DBHelper:
         )
         self._async_session_maker: async_sessionmaker[AsyncSession] = (
             async_sessionmaker(
-                engine=self._engine,
+                bind=self._engine,
                 expire_on_commit=False,
                 autoflush=False,
                 autocommit=False,
