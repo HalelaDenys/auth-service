@@ -1,8 +1,13 @@
 from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING
 from jose import jwt, JWTError
-import uuid
+from core import settings
+import secrets
 import bcrypt
-from core.config import settings
+import uuid
+
+if TYPE_CHECKING:
+    from infrastructure import User
 
 ACCESS_TOKEN = "access"
 REFRESH_TOKEN = "refresh"
@@ -55,17 +60,21 @@ class Security:
         return jwt.encode(to_encode, secret_key, algorithm=settings.jwt.algorithm)
 
     @classmethod
-    def create_access_token(cls, data) -> str:
+    def create_access_token(cls, data: "User") -> str:
         return cls._create_token(
             token_type=ACCESS_TOKEN,
-            payload={"sub": str(data["id"])},
+            payload={"sub": str(data.id)},
             expire_days=settings.jwt.access_expire_day,
         )
 
+    @staticmethod
+    def create_refresh_token() -> str:
+        return secrets.token_urlsafe(48)
+
     @classmethod
-    def create_refresh_token(cls, data) -> str:
-        return cls._create_token(
-            token_type=REFRESH_TOKEN,
-            payload={"sub": str(data["id"])},
-            expire_days=settings.jwt.refresh_expire_day,
-        )
+    def hash_refresh_token(cls, token: str) -> str:
+        return cls.hash_password(token)
+
+    @classmethod
+    def verify_refresh_token(cls, token: str, token_hash: str) -> bool:
+        return cls.verify_password(token, token_hash)

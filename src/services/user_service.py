@@ -3,7 +3,7 @@ from infrastructure import UserRepository, db_helper, User
 from typing import AsyncGenerator
 from schemas.user_schemas import RegisterUserSchema, CreateUserSchema
 from core.exceptions import NotFoundError, AlreadyExistsError
-from core.security import Security
+from core.security.security import Security
 
 
 class UserService(BaseService):
