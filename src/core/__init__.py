@@ -1,5 +1,8 @@
 __all__ = [
-    "settings"
+    "settings",
+    "Security",
 ]
 
 from core.config import settings
+
+from core.security import Security

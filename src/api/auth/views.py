@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends
 from services.user_service import get_user_service, UserService
+from services.auth_service import (
+    get_auth_service,
+    AuthService,
+    authenticate_user_dependency,
+)
 from schemas.user_schemas import RegisterUserSchema, ReadUserSchema
 from typing import Annotated
+from infrastructure import User
+from schemas.auth_schemas import TokenSchema
 
 router = APIRouter(
     prefix="/auth",
@@ -19,8 +26,11 @@ async def register(
 
 
 @router.post("/login")
-async def login():
-    pass
+async def login(
+    user_data: Annotated["User", Depends(authenticate_user_dependency)],
+    auth_service: Annotated["AuthService", Depends(get_auth_service)],
+) -> TokenSchema:
+    return await auth_service.login_user(user_data)
 
 
 @router.post("/logout")

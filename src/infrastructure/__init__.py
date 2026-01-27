@@ -4,6 +4,7 @@ __all__ = [
     "User",
     "RefreshToken",
     "UserRepository",
+    "TokenRepository",
 ]
 
 from infrastructure.db.db_helper import db_helper
@@ -12,3 +13,4 @@ from infrastructure.db.models.users import User
 from infrastructure.db.models.refresh_token import RefreshToken
 
 from infrastructure.repo.user_repo import UserRepository
+from infrastructure.repo.token_repo import TokenRepository
