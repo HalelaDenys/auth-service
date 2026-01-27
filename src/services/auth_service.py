@@ -32,7 +32,7 @@ class AuthService:
 
     async def login_user(self, user_data: User) -> TokenSchema:
         access_token = Security.create_access_token(data=user_data)
-        refresh_token = Security.create_refresh_token(data=user_data)
+        refresh_token = Security.create_refresh_token()
 
         refresh_token_hash = Security.hash_refresh_token(refresh_token)
 
