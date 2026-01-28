@@ -46,6 +46,8 @@ class Security:
         secret_key: str = settings.jwt.secret_key,
         expire_days: int = settings.jwt.access_expire_day,
         expire_timedelta: timedelta | None = None,
+        jti: str | None = None,
+        refresh_exp: datetime | None = None,
     ) -> str:
         to_encode = payload.copy()
         now = datetime.now(timezone.utc)
@@ -55,7 +57,17 @@ class Security:
         else:
             expire = now + timedelta(days=expire_days)
 
-        to_encode.update(type=token_type, exp=expire, iat=now, jti=str(uuid.uuid4()))
+        to_encode.update(type=token_type, exp=expire, iat=now)
+
+        if token_type == ACCESS_TOKEN:
+            to_encode["jti"] = str(uuid.uuid4())
+        elif token_type == REFRESH_TOKEN:
+            to_encode["jti"] = jti or str(uuid.uuid4())
+
+        if refresh_exp:
+            to_encode["exp"] = refresh_exp
+        else:
+            to_encode["exp"] = expire
 
         return jwt.encode(to_encode, secret_key, algorithm=settings.jwt.algorithm)
 
@@ -67,14 +79,11 @@ class Security:
             expire_days=settings.jwt.access_expire_day,
         )
 
-    @staticmethod
-    def create_refresh_token() -> str:
-        return secrets.token_urlsafe(48)
-
     @classmethod
-    def hash_refresh_token(cls, token: str) -> str:
-        return cls.hash_password(token)
-
-    @classmethod
-    def verify_refresh_token(cls, token: str, token_hash: str) -> bool:
-        return cls.verify_password(token, token_hash)
+    def create_refresh_token(cls, data: "User", jti: str, refresh_exp: datetime) -> str:
+        return cls._create_token(
+            token_type=REFRESH_TOKEN,
+            payload={"sub": str(data.id)},
+            jti=jti,
+            refresh_exp=refresh_exp,
+        )

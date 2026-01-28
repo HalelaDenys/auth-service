@@ -17,5 +17,5 @@ class TokenSchema(BaseSchema):
 
 class CreateRefreshTokenSchema(BaseSchema):
     user_id: int
-    token_hash: str
+    jti: str
     expires_at: datetime

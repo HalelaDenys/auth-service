@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class RefreshToken(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    token_hash: Mapped[str] = mapped_column(VARCHAR(1000), unique=True)
+    jti: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
 
     user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")
