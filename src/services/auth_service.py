@@ -1,8 +1,14 @@
+import uuid
+
 from infrastructure import TokenRepository, db_helper, UserRepository, User
 from typing import AsyncGenerator, Annotated
 from fastapi import Depends, Form
 from schemas.auth_schemas import LoginSchema, TokenSchema, CreateRefreshTokenSchema
-from core.exceptions import UNAUTHORIZED_EXC_INCORRECT, FORBIDDEN_EXC_INACTIVE
+from core.exceptions import (
+    UNAUTHORIZED_EXC_INCORRECT,
+    FORBIDDEN_EXC_INACTIVE,
+    UNAUTHORIZED_EXC_INVALID_TOKEN,
+)
 from datetime import datetime, timedelta, timezone
 from core import settings, Security
 
@@ -31,15 +37,20 @@ class AuthService:
         return user
 
     async def login_user(self, user_data: User) -> TokenSchema:
-        access_token = Security.create_access_token(data=user_data)
-        refresh_token = Security.create_refresh_token()
+        refresh_token_jti = str(uuid.uuid4())
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=settings.jwt.refresh_expire_day
+        )
 
-        refresh_token_hash = Security.hash_refresh_token(refresh_token)
+        access_token = Security.create_access_token(data=user_data)
+        refresh_token = Security.create_refresh_token(
+            data=user_data, jti=refresh_token_jti, refresh_exp=expire
+        )
 
         await self._token_repo.create(
             CreateRefreshTokenSchema(
                 user_id=user_data.id,
-                token_hash=refresh_token_hash,
+                jti=refresh_token_jti,
                 expires_at=datetime.now(timezone.utc)
                 + timedelta(days=settings.jwt.refresh_expire_day),
             )
@@ -49,6 +60,20 @@ class AuthService:
             access_token=access_token,
             refresh_token=refresh_token,
         )
+
+    async def logout_user(self, user_id: int, refresh_token: str) -> None:
+
+        payload = Security.decode_token(token=refresh_token)
+
+        if not (
+            token := await self._token_repo.find_single(
+                user_id=user_id,
+                jti=payload["jti"],
+            )
+        ):
+            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+
+        await self._token_repo.delete(id=token.id)
 
 
 async def get_auth_service() -> AsyncGenerator[AuthService, None]:
