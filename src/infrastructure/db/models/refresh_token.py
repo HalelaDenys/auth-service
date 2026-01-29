@@ -1,6 +1,6 @@
 from infrastructure import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import VARCHAR, ForeignKey, TIMESTAMP
+from sqlalchemy import ForeignKey, TIMESTAMP
 from datetime import datetime
 
 from typing import TYPE_CHECKING
