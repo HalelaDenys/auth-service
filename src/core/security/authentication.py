@@ -61,11 +61,12 @@ def get_auth_user_from_token_of_type(token_type: str):
 
 
 get_current_auth_user = get_auth_user_from_token_of_type("access")
+get_current_auth_user_for_refresh = get_auth_user_from_token_of_type("refresh")
 
 
 def check_user_is_active(
-    employee: Annotated["User", Depends(get_current_auth_user)],
+    user: Annotated["User", Depends(get_current_auth_user)],
 ) -> bool:
-    if not employee.is_active:
+    if not user.is_active:
         raise FORBIDDEN_EXC_INACTIVE
     return True

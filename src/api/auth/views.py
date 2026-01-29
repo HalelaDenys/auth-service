@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, Header
 from services.user_service import get_user_service, UserService
 from services.auth_service import (
     authenticate_user_dependency,
@@ -9,7 +9,11 @@ from schemas.user_schemas import RegisterUserSchema, ReadUserSchema
 from typing import Annotated
 from infrastructure import User
 from schemas.auth_schemas import TokenSchema
-from core.security.authentication import get_current_auth_user
+from core.security.authentication import (
+    get_current_auth_user,
+    get_current_auth_user_for_refresh,
+    get_current_token_payload,
+)
 
 router = APIRouter(
     prefix="/auth",
@@ -36,7 +40,7 @@ async def login(
 
 @router.post("/logout")
 async def logout(
-    refresh_token: str,
+    refresh_token: Annotated[str, Body()],
     user: Annotated["User", Depends(get_current_auth_user)],
     auth_service: Annotated["AuthService", Depends(get_auth_service)],
 ) -> dict:
@@ -45,9 +49,18 @@ async def logout(
     return {"detail": "Successfully logged out"}
 
 
-@router.post("/refresh")
-async def refresh():
-    pass
+@router.post(
+    "/refresh",
+)
+async def refresh(
+    current_user: Annotated["User", Depends(get_current_auth_user_for_refresh)],
+    payload: Annotated[dict, Depends(get_current_token_payload)],
+    auth_service: Annotated["AuthService", Depends(get_auth_service)],
+) -> TokenSchema:
+
+    return await auth_service.update_refresh_token(
+        user_data=current_user, jti=payload["jti"]
+    )
 
 
 @router.post("/reset-password")

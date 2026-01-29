@@ -1,6 +1,12 @@
 import uuid
 
-from infrastructure import TokenRepository, db_helper, UserRepository, User
+from infrastructure import (
+    TokenRepository,
+    db_helper,
+    UserRepository,
+    User,
+    RefreshToken,
+)
 from typing import AsyncGenerator, Annotated
 from fastapi import Depends, Form
 from schemas.auth_schemas import LoginSchema, TokenSchema, CreateRefreshTokenSchema
@@ -65,15 +71,30 @@ class AuthService:
 
         payload = Security.decode_token(token=refresh_token)
 
+        token = await self.get_token(user_id=user_id, jti=payload["jti"])
+
+        await self._token_repo.delete(id=token.id)
+
+    async def update_refresh_token(self, user_data: User, jti: str) -> TokenSchema:
+        token = await self.get_token(user_id=user_data.id, jti=jti)
+
+        await self._token_repo.delete(id=token.id)
+
+        return await self.login_user(user_data=user_data)
+
+    async def get_token(self, user_id: int, jti: str) -> RefreshToken:
         if not (
             token := await self._token_repo.find_single(
                 user_id=user_id,
-                jti=payload["jti"],
+                jti=jti,
             )
         ):
             raise UNAUTHORIZED_EXC_INVALID_TOKEN
 
-        await self._token_repo.delete(id=token.id)
+        if token.expires_at < datetime.now(timezone.utc):
+            await self._token_repo.delete(id=token.id)
+            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+        return token
 
 
 async def get_auth_service() -> AsyncGenerator[AuthService, None]:
