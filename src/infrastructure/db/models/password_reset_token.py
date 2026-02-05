@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 class PasswordResetToken(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    hashed_token: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
+    lookup_hash: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
+    hashed_token: Mapped[str] = mapped_column(nullable=False)
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
 
     user: Mapped["User"] = relationship("User", back_populates="reset_tokens")
