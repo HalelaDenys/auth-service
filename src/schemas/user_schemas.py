@@ -59,3 +59,7 @@ class CreateUserSchema(BaseSchema):
     phone_number: Optional[str] = None
     role: Optional[UserRole | str] = (UserRole.user,)
     hashed_password: str
+
+
+class UpdateUserPassSchema(BaseSchema):
+    hashed_password: str
