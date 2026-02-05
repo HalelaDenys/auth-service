@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from jose import jwt, JWTError
 from core import settings
 import secrets
+import hashlib
 import bcrypt
 import uuid
 
@@ -87,3 +88,11 @@ class Security:
             jti=jti,
             refresh_exp=refresh_exp,
         )
+
+    @staticmethod
+    def generate_reset_token() -> str:
+        return secrets.token_urlsafe(32)
+
+    @staticmethod
+    def hash_token_sha256(token: str) -> str:
+        return hashlib.sha256(token.encode()).hexdigest()
