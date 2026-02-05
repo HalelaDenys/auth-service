@@ -8,7 +8,11 @@ from services.auth_service import (
 from schemas.user_schemas import RegisterUserSchema, ReadUserSchema
 from typing import Annotated
 from infrastructure import User
-from schemas.auth_schemas import TokenSchema
+from schemas.auth_schemas import (
+    TokenSchema,
+    ResetPasswordRequestSchema,
+    ResetPasswordConfirmSchema,
+)
 from core.security.authentication import (
     get_current_auth_user,
     get_current_auth_user_for_refresh,
@@ -63,13 +67,26 @@ async def refresh(
     )
 
 
-@router.post("/reset-password")
-async def reset_password():
-    pass
+@router.post("/reset-password/request")
+async def request_reset_password(
+    data: ResetPasswordRequestSchema,
+    auth_service: Annotated["AuthService", Depends(get_auth_service)],
+):
+    await auth_service.create_reset_token(data.email)
+    return {"detail": "If email exists, reset link was sent"}
 
 
-@router.post("/forgot-password")
-async def forgot_password():
+@router.post("/reset-password/confirm")
+async def reset_password(
+    data: ResetPasswordConfirmSchema,
+    auth_service: Annotated["AuthService", Depends(get_auth_service)],
+):
+    await auth_service.reset_password(data=data)
+    return {"detail": "Password updated"}
+
+
+@router.post("/change_password")
+async def change_password():
     pass
 
 
