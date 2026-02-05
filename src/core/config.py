@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class MiddlewareConfig(BaseModel):
     cors_allowed_origins: list[str]
 
+
 class DBConfig(BaseModel):
     naming_convention: ClassVar[dict] = {
         "ix": "ix_%(column_0_label)s",
@@ -32,11 +33,13 @@ class DBConfig(BaseModel):
             f"{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
+
 class AuthConfig(BaseModel):
     secret_key: str
     access_expire_day: int
     refresh_expire_day: int
     algorithm: str = "HS256"
+    reset_token_expire_minute: int
 
 
 class Settings(BaseSettings):
@@ -54,4 +57,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

@@ -11,7 +11,7 @@ class AlreadyExistsError(Exception):
 
 UNAUTHORIZED_EXC_INCORRECT = HTTPException(
     status_code=401,
-    detail="Incorrect phone number or password",
+    detail="Incorrect email or password",
 )
 
 
