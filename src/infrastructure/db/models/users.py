@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from infrastructure import RefreshToken
+    from infrastructure import RefreshToken, PasswordResetToken
 
 
 class UserRole(StrEnum):
@@ -40,6 +40,12 @@ class User(Base):
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
+        "PasswordResetToken",
         back_populates="user",
         cascade="all, delete-orphan",
     )
