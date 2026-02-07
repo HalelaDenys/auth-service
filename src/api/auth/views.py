@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Header
+from fastapi import APIRouter, Depends, Body, Header, status
 from services.user_service import get_user_service, UserService
 from services.auth_service import (
     authenticate_user_dependency,
@@ -25,7 +25,7 @@ router = APIRouter(
 )
 
 
-@router.post("/register")
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: RegisterUserSchema,
     user_service: Annotated["UserService", Depends(get_user_service)],
@@ -34,7 +34,7 @@ async def register(
     return ReadUserSchema(**user.to_dict())
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_200_OK)
 async def login(
     user_data: Annotated["User", Depends(authenticate_user_dependency)],
     auth_service: Annotated["AuthService", Depends(get_auth_service)],
@@ -42,7 +42,7 @@ async def login(
     return await auth_service.login_user(user_data)
 
 
-@router.post("/logout")
+@router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(
     refresh_token: Annotated[str, Body()],
     user: Annotated["User", Depends(get_current_auth_user)],
@@ -55,6 +55,7 @@ async def logout(
 
 @router.post(
     "/refresh",
+    status_code=status.HTTP_200_OK,
 )
 async def refresh(
     current_user: Annotated["User", Depends(get_current_auth_user_for_refresh)],
@@ -67,22 +68,22 @@ async def refresh(
     )
 
 
-@router.post("/reset-password/request")
+@router.post("/reset-password/request", status_code=status.HTTP_202_ACCEPTED)
 async def request_reset_password(
     data: ResetPasswordRequestSchema,
     auth_service: Annotated["AuthService", Depends(get_auth_service)],
-):
+) -> None:
     await auth_service.create_reset_token(data.email)
-    return {"detail": "If email exists, reset link was sent"}
+    return
 
 
-@router.post("/reset-password/confirm")
+@router.post("/reset-password/confirm", status_code=status.HTTP_202_ACCEPTED)
 async def reset_password(
     data: ResetPasswordConfirmSchema,
     auth_service: Annotated["AuthService", Depends(get_auth_service)],
-):
+) -> None:
     await auth_service.reset_password(data=data)
-    return {"detail": "Password updated"}
+    return
 
 
 @router.post("/change_password")
