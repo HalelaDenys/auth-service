@@ -1,13 +1,13 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import HTTPException, Depends
-from jose import JWTError
-from typing import Annotated, TYPE_CHECKING
-from core.exceptions import UNAUTHORIZED_EXC_INVALID_TOKEN, FORBIDDEN_EXC_INACTIVE
 from services.user_service import get_user_service, UserService
-from core import Security
+from typing import Annotated, TYPE_CHECKING
+from fastapi import HTTPException, Depends
+from core import Security, exceptions
+from jose import JWTError
 
 if TYPE_CHECKING:
     from infrastructure import User
+
 http_bearer = HTTPBearer(auto_error=False)
 
 
@@ -43,7 +43,7 @@ async def get_user_by_token_sub(
     sub: str | None = payload.get("sub")
     if user := await user_service.get(id=int(sub)):
         return user
-    raise UNAUTHORIZED_EXC_INVALID_TOKEN
+    raise exceptions.unauthorized_exc_inactive_token()
 
 
 def get_auth_user_from_token_of_type(token_type: str):
@@ -68,5 +68,5 @@ def check_user_is_active(
     user: Annotated["User", Depends(get_current_auth_user)],
 ) -> bool:
     if not user.is_active:
-        raise FORBIDDEN_EXC_INACTIVE
+        raise exceptions.forbidden_exc_inactive()
     return True

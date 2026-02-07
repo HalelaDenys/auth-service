@@ -1,31 +1,20 @@
-import uuid
-from infrastructure import (
-    TokenRepository,
-    db_helper,
-    UserRepository,
-    User,
-    RefreshToken,
-    PasswordResetTokenRepository,
-    broker,
-)
-from schemas.auth_schemas import (
-    LoginSchema,
-    TokenSchema,
-    CreateRefreshTokenSchema,
-    CreateResetPasswordTokenSchema,
-    ResetPasswordConfirmSchema,
-    ResetPasswordEmailPayloadBroker,
-)
-from core.exceptions import (
-    UNAUTHORIZED_EXC_INCORRECT,
-    FORBIDDEN_EXC_INACTIVE,
-    UNAUTHORIZED_EXC_INVALID_TOKEN,
-)
 from schemas.user_schemas import UpdateUserPassSchema
 from datetime import datetime, timedelta, timezone
 from typing import AsyncGenerator, Annotated
 from core import settings, Security
 from fastapi import Depends, Form
+from infrastructure import (
+    PasswordResetTokenRepository,
+    TokenRepository,
+    UserRepository,
+    RefreshToken,
+    db_helper,
+    broker,
+    User,
+)
+from schemas import auth_schemas
+from core import exceptions
+import uuid
 
 
 class AuthService:
@@ -41,23 +30,23 @@ class AuthService:
 
     async def authenticate_user(
         self,
-        user_data: Annotated[LoginSchema, Form()],
+        user_data: Annotated[auth_schemas.LoginSchema, Form()],
     ) -> User:
         if not (user := await self._user_repo.find_single(email=user_data.email)):
-            raise UNAUTHORIZED_EXC_INCORRECT
+            raise exceptions.unauthorized_exc_incorrect()
 
         if not Security.verify_password(
             user_data.password,
             str(user.hashed_password),
         ):
-            raise UNAUTHORIZED_EXC_INCORRECT
+            raise exceptions.unauthorized_exc_incorrect()
 
         if not user.is_active:
-            raise FORBIDDEN_EXC_INACTIVE
+            raise exceptions.forbidden_exc_inactive()
 
         return user
 
-    async def login_user(self, user_data: User) -> TokenSchema:
+    async def login_user(self, user_data: User) -> auth_schemas.TokenSchema:
         refresh_token_jti = str(uuid.uuid4())
         expire = datetime.now(timezone.utc) + timedelta(
             days=settings.jwt.refresh_expire_day
@@ -69,7 +58,7 @@ class AuthService:
         )
 
         await self._token_repo.create(
-            CreateRefreshTokenSchema(
+            auth_schemas.CreateRefreshTokenSchema(
                 user_id=user_data.id,
                 jti=refresh_token_jti,
                 expires_at=datetime.now(timezone.utc)
@@ -77,7 +66,7 @@ class AuthService:
             )
         )
 
-        return TokenSchema(
+        return auth_schemas.TokenSchema(
             access_token=access_token,
             refresh_token=refresh_token,
         )
@@ -90,7 +79,9 @@ class AuthService:
 
         await self._token_repo.delete(id=token.id)
 
-    async def update_refresh_token(self, user_data: User, jti: str) -> TokenSchema:
+    async def update_refresh_token(
+        self, user_data: User, jti: str
+    ) -> auth_schemas.TokenSchema:
         token = await self.get_token(user_id=user_data.id, jti=jti)
 
         await self._token_repo.delete(id=token.id)
@@ -104,11 +95,11 @@ class AuthService:
                 jti=jti,
             )
         ):
-            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+            raise exceptions.unauthorized_exc_inactive_token()
 
         if token.expires_at < datetime.now(timezone.utc):
             await self._token_repo.delete(id=token.id)
-            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+            raise exceptions.unauthorized_exc_inactive_token()
         return token
 
     async def create_reset_token(self, email: str) -> None:
@@ -124,7 +115,7 @@ class AuthService:
         )
 
         await self._reset_token_repo.create(
-            CreateResetPasswordTokenSchema(
+            auth_schemas.CreateResetPasswordTokenSchema(
                 user_id=user.id,
                 lookup_hash=lookup_hash,
                 hashed_token=hashed_token,
@@ -133,30 +124,32 @@ class AuthService:
         )
 
         await broker.publish(
-            ResetPasswordEmailPayloadBroker(
+            auth_schemas.ResetPasswordEmailPayloadBroker(
                 email=user.email,
                 token=raw_token,
             ),
             queue="password-reset-request",
         )
 
-    async def reset_password(self, data: ResetPasswordConfirmSchema) -> None:
+    async def reset_password(
+        self, data: auth_schemas.ResetPasswordConfirmSchema
+    ) -> None:
         lookup_hash = Security.hash_token_sha256(token=data.token)
 
         reset_token = await self._reset_token_repo.find_single(lookup_hash=lookup_hash)
 
         if not reset_token:
-            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+            raise exceptions.unauthorized_exc_inactive_token()
 
         if reset_token.expires_at < datetime.now(timezone.utc):
             await self._reset_token_repo.delete(id=reset_token.id)
-            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+            raise exceptions.unauthorized_exc_inactive_token()
 
         if not Security.verify_password(data.token, reset_token.hashed_token):
-            raise UNAUTHORIZED_EXC_INCORRECT
+            raise exceptions.unauthorized_exc_incorrect()
 
         if not (user := await self._user_repo.find_single(id=reset_token.user_id)):
-            raise UNAUTHORIZED_EXC_INVALID_TOKEN
+            raise exceptions.unauthorized_exc_inactive_token()
 
         await self._reset_token_repo.delete(id=reset_token.id)
         await self.update_user_password(user_id=user.id, new_password=data.new_password)
@@ -184,7 +177,7 @@ async def get_auth_service() -> AsyncGenerator[AuthService, None]:
 
 
 async def authenticate_user_dependency(
-    user_data: Annotated[LoginSchema, Form()],
+    user_data: Annotated[auth_schemas.LoginSchema, Form()],
     auth_service: Annotated["AuthService", Depends(get_auth_service)],
 ):
     return await auth_service.authenticate_user(user_data=user_data)

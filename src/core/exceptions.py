@@ -9,23 +9,29 @@ class AlreadyExistsError(Exception):
     pass
 
 
-UNAUTHORIZED_EXC_INCORRECT = HTTPException(
-    status_code=401,
-    detail="Incorrect email or password",
-)
+def unauthorized_exc_incorrect() -> HTTPException:
+    return HTTPException(
+        status_code=401,
+        detail="Incorrect email or password",
+    )
 
 
-FORBIDDEN_EXC_INACTIVE = HTTPException(
-    status_code=403,
-    detail="Inactive user",
-)
+def forbidden_exc_inactive() -> HTTPException:
+    return HTTPException(
+        status_code=403,
+        detail="Inactive user",
+    )
 
-UNAUTHORIZED_EXC_INVALID_TOKEN = HTTPException(
-    status_code=401,
-    detail="Invalid token",
-)
 
-FORBIDDEN_EXC_NOT_ENOUGH_RIGHTS = HTTPException(
-    status_code=403,
-    detail="Not enough rights",
-)
+def unauthorized_exc_inactive_token() -> HTTPException:
+    return HTTPException(
+        status_code=401,
+        detail="Invalid token",
+    )
+
+
+def forbidden_exc_not_enough_rights() -> HTTPException:
+    return HTTPException(
+        status_code=403,
+        detail="Not enough rights",
+    )
