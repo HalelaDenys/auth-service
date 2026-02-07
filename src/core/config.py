@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel
+from pydantic import BaseModel, AmqpDsn
 from typing import ClassVar
 from pathlib import Path
 
@@ -42,6 +42,20 @@ class AuthConfig(BaseModel):
     reset_token_expire_minute: int
 
 
+class EmailConfig(BaseModel):
+    host: str = "0.0.0.0"
+    port: int = 1025
+    from_email: str = "admin@example.com"
+    username: str | None = None
+    password: str | None = None
+
+
+class BrokerConfig(BaseModel):
+    rabbit_url: AmqpDsn = "amqp://guest:guest@localhost:5672/"
+    enable_broker: bool = True
+    with_real: bool = False
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
@@ -54,6 +68,8 @@ class Settings(BaseSettings):
     midd: MiddlewareConfig
     jwt: AuthConfig
     mode: str
+    mail: EmailConfig = EmailConfig()
+    br: BrokerConfig = BrokerConfig()
 
 
 settings = Settings()
