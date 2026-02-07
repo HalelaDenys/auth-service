@@ -6,6 +6,7 @@ from infrastructure import (
     User,
     RefreshToken,
     PasswordResetTokenRepository,
+    broker,
 )
 from schemas.auth_schemas import (
     LoginSchema,
@@ -13,6 +14,7 @@ from schemas.auth_schemas import (
     CreateRefreshTokenSchema,
     CreateResetPasswordTokenSchema,
     ResetPasswordConfirmSchema,
+    ResetPasswordEmailPayloadBroker,
 )
 from core.exceptions import (
     UNAUTHORIZED_EXC_INCORRECT,
@@ -130,8 +132,13 @@ class AuthService:
             )
         )
 
-        # TODO notification to the user's email address
-        # await send_email_reset_pass(token=raw_token, email=user.email)
+        await broker.publish(
+            ResetPasswordEmailPayloadBroker(
+                email=user.email,
+                token=raw_token,
+            ),
+            queue="password-reset-request",
+        )
 
     async def reset_password(self, data: ResetPasswordConfirmSchema) -> None:
         lookup_hash = Security.hash_token_sha256(token=data.token)

@@ -36,3 +36,8 @@ class ResetPasswordRequestSchema(BaseSchema):
 class ResetPasswordConfirmSchema(BaseSchema):
     token: str
     new_password: Annotated[str, Field(max_length=150, description="New password")]
+
+
+class ResetPasswordEmailPayloadBroker(BaseSchema):
+    email: EmailStr | str
+    token: str
