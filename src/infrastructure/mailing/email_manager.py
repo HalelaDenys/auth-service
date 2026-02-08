@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from textwrap import dedent
 from typing import AsyncGenerator
 
-from core import settings
+from core import settings, templates
 import aiosmtplib
 
 
@@ -65,11 +65,18 @@ class EmailManager:
             ℗ 2026.   
             """)
 
+        template = templates.get_template("mailing/reset-password-request.html")
+        context = {
+            "email": email_recipient,
+            "reset_url": reset_url,
+            "reset_token": reset_token,
+        }
+        html_content = template.render(context)
         await self._send_email(
             recipient=email_recipient,
             subject=subject,
             plain_content=plain_content,
-            html_content="",
+            html_content=html_content,
         )
 
 
