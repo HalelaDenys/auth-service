@@ -77,7 +77,11 @@ async def request_reset_password(
     return
 
 
-@router.post("/reset-password/confirm", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/reset-password/confirm",
+    status_code=status.HTTP_202_ACCEPTED,
+    name="reset_password_confirm",
+)
 async def reset_password(
     data: ResetPasswordConfirmSchema,
     auth_service: Annotated["AuthService", Depends(get_auth_service)],

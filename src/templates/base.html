@@ -1,50 +1,19 @@
 {# base.html #}
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Email{% endblock %}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f3f4f6; font-family:Arial, sans-serif;">
 
-<table style="background-color:#f3f4f6; padding:20px 0; width: 100%; ">
-    <tr>
-        <td align="center">
-            <table
-                   style="background-color:#ffffff;
-                   border-radius:8px; overflow:hidden;
-                   box-shadow:0 2px 8px rgba(0,0,0,0.05); width: 600px;">
+<body class="m-0 p-0">
 
-                <!-- HEADER -->
-                <tr>
-                    <td style="background-color:#111827; padding:16px; text-align:center;">
-                        <h1 style="color:#ffffff; margin:0; font-size:20px;">
-                            {% block header %}Security Notification{% endblock %}
-                        </h1>
-                    </td>
-                </tr>
+{% block header %}{% endblock %}
 
-                <!-- MAIN -->
-                <tr>
-                    <td style="padding:24px; color:#111827; font-size:14px; line-height:1.6;">
-                        {% block main %}{% endblock %}
-                    </td>
-                </tr>
+{% block main %}{% endblock %}
 
-                <!-- FOOTER -->
-                <tr>
-                    <td style="background-color:#f9fafb; padding:16px; text-align:center; font-size:12px; color:#6b7280;">
-                        {% block footer %}
-                            With respect, the site administration <br>
-                            &copy; 2026
-                        {% endblock %}
-                    </td>
-                </tr>
-
-            </table>
-        </td>
-    </tr>
-</table>
+{% block footer %}{% endblock %}
 
 </body>
 </html>

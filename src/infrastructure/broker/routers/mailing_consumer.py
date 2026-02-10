@@ -4,6 +4,7 @@ from faststream import Depends
 from schemas.auth_schemas import ResetPasswordEmailPayloadBroker
 from infrastructure import EmailManager, get_email_manager
 from typing import Annotated
+from core import settings
 
 mailing_router = RabbitRouter()
 
@@ -16,5 +17,5 @@ async def password_reset_request_notifications(
     await email_manager.send_email_reset_pass(
         email_recipient=data.email,
         reset_token=data.token,
-        reset_url="http://0.0.0.0:8000/docs#/Auth/reset_password_api_v1_auth_reset_password_confirm_post",
+        reset_url=settings.fron.reset_password_url,
     )

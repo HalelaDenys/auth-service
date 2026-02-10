@@ -56,6 +56,10 @@ class BrokerConfig(BaseModel):
     with_real: bool = False
 
 
+class FrontendConfig(BaseModel):
+    reset_password_url: str = "http://0.0.0.0:8000/view/reset"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
@@ -70,6 +74,7 @@ class Settings(BaseSettings):
     mode: str
     mail: EmailConfig = EmailConfig()
     br: BrokerConfig = BrokerConfig()
+    fron: FrontendConfig = FrontendConfig()
 
 
 settings = Settings()
