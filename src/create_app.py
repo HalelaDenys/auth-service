@@ -6,6 +6,7 @@ from infrastructure import db_helper, broker
 from core.middlewares import register_middleware
 from api import api_router
 from core import settings
+from views import view_router
 
 
 @asynccontextmanager
@@ -31,4 +32,5 @@ def create_app() -> FastAPI:
     register_middleware(app)
 
     app.include_router(api_router)
+    app.include_router(view_router)
     return app

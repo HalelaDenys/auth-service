@@ -52,24 +52,24 @@ class EmailManager:
         self, email_recipient: str, reset_token: str, reset_url: str = ""
     ):
         subject = "Reset password"
+        full_url = f"{reset_url}?token={reset_token}"
 
         plain_content = dedent(f"""\
             Dear {email_recipient},
             
-            Please follow the link to reset your password to {reset_url}
-            
-            Use this token to reset your password: 
-            {reset_token}         
+            Please follow the link to reset your password to {full_url}
+                  
+            If you did not request a password reset, you can safely ignore this email.
             
             Your site admin
             ℗ 2026.   
             """)
 
         template = templates.get_template("mailing/reset-password-request.html")
+
         context = {
             "email": email_recipient,
-            "reset_url": reset_url,
-            "reset_token": reset_token,
+            "reset_url": full_url,
         }
         html_content = template.render(context)
         await self._send_email(
