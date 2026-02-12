@@ -5,6 +5,9 @@ from typing import AsyncGenerator
 
 from core import settings, templates
 import aiosmtplib
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class EmailManager:
@@ -14,13 +17,13 @@ class EmailManager:
         post: int = settings.mail.port,
         username: str = settings.mail.username,
         password: str = settings.mail.password,
-        start_tls: bool = False,
+        use_tls: bool = settings.mail.use_tls,
     ):
         self._host = host
         self._post = post
         self._username = username
         self._password = password
-        self._start_tls = start_tls
+        self._use_tls = use_tls
 
     async def _send_email(
         self, recipient: str, subject: str, plain_content: str, html_content: str = ""
@@ -42,10 +45,10 @@ class EmailManager:
                 port=self._post,
                 username=self._username,
                 password=self._password,
-                start_tls=self._start_tls,
+                use_tls=self._use_tls,
             )
         except aiosmtplib.SMTPException as e:
-            # print(f"Email send failed: {e}")
+            log.error("Email send failed: %s", str(e))
             raise
 
     async def send_email_reset_pass(

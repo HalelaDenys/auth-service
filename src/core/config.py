@@ -1,9 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, AmqpDsn
-from typing import ClassVar
+from typing import ClassVar, Literal
 from pathlib import Path
+import logging
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+LOG_DEFAULT_FORMAT = (
+    "[%(asctime)s.%(msecs)03d] %(module)10s:%(lineno)-3d %(levelname)-7s - %(message)s"
+)
 
 
 class MiddlewareConfig(BaseModel):
@@ -43,11 +47,16 @@ class AuthConfig(BaseModel):
 
 
 class EmailConfig(BaseModel):
+    """
+    Dev configuration. With test data for Maildev
+    """
+
     host: str = "0.0.0.0"
     port: int = 1025
     from_email: str = "admin@example.com"
     username: str | None = None
     password: str | None = None
+    use_tls: bool = True
 
 
 class BrokerConfig(BaseModel):
@@ -58,6 +67,22 @@ class BrokerConfig(BaseModel):
 
 class FrontendConfig(BaseModel):
     reset_password_url: str = "http://0.0.0.0:8000/view/reset"
+
+
+class LoggingConfig(BaseModel):
+    log_level: Literal[
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "critical",
+    ] = "info"
+
+    log_format: str = LOG_DEFAULT_FORMAT
+
+    @property
+    def log_level_value(self) -> int:
+        return logging.getLevelNamesMapping()[self.log_level.upper()]
 
 
 class Settings(BaseSettings):
@@ -75,6 +100,7 @@ class Settings(BaseSettings):
     mail: EmailConfig = EmailConfig()
     br: BrokerConfig = BrokerConfig()
     fron: FrontendConfig = FrontendConfig()
+    logging: LoggingConfig = LoggingConfig()
 
 
 settings = Settings()
