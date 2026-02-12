@@ -4,9 +4,16 @@ from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 from infrastructure import db_helper, broker
 from core.middlewares import register_middleware
+from core.error_handlers import register_error_handlers
 from api import api_router
 from core import settings
 from views import view_router
+import logging
+
+logging.basicConfig(
+    level=settings.logging.log_level_value,
+    format=settings.logging.log_format,
+)
 
 
 @asynccontextmanager
@@ -30,6 +37,7 @@ def create_app() -> FastAPI:
     )
 
     register_middleware(app)
+    register_error_handlers(app)
 
     app.include_router(api_router)
     app.include_router(view_router)
