@@ -77,6 +77,7 @@ class AuthService:
 
         token = await self.get_token(user_id=user_id, jti=payload["jti"])
 
+        # delete token for a specific session
         await self._token_repo.delete(id=token.id)
 
     async def update_refresh_token(
@@ -153,6 +154,17 @@ class AuthService:
 
         await self._reset_token_repo.delete(id=reset_token.id)
         await self.update_user_password(user_id=user.id, new_password=data.new_password)
+
+    async def change_password(
+        self, data: auth_schemas.ChangePasswordSchema, user: User
+    ) -> None:
+        if not Security.verify_password(data.old_password, user.hashed_password):
+            raise exceptions.incorrect_old_password()
+
+        await self.update_user_password(user_id=user.id, new_password=data.new_password)
+
+        # full logout user
+        await self._token_repo.delete(user_id=user.id)
 
     async def update_user_password(self, user_id: int, new_password: str) -> None:
         new_hashed_password = Security.hash_password(password=new_password)

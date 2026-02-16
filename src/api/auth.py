@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Header, status
+from fastapi import APIRouter, Depends, Body, status
 from services.user_service import get_user_service, UserService
 from services.auth_service import (
     authenticate_user_dependency,
@@ -12,6 +12,7 @@ from schemas.auth_schemas import (
     TokenSchema,
     ResetPasswordRequestSchema,
     ResetPasswordConfirmSchema,
+    ChangePasswordSchema,
 )
 from core.security.authentication import (
     get_current_auth_user,
@@ -90,9 +91,17 @@ async def reset_password(
     return
 
 
-@router.post("/change_password")
-async def change_password():
-    pass
+@router.post(
+    "/change_password",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def change_password(
+    data: ChangePasswordSchema,
+    user: Annotated["User", Depends(get_current_auth_user)],
+    auth_service: Annotated["AuthService", Depends(get_auth_service)],
+) -> None:
+    await auth_service.change_password(user=user, data=data)
+    return
 
 
 @router.post("/verify-email")

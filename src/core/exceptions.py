@@ -35,3 +35,10 @@ def forbidden_exc_not_enough_rights() -> HTTPException:
         status_code=403,
         detail="Not enough rights",
     )
+
+
+def incorrect_old_password() -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail="Old password is incorrect",
+    )
