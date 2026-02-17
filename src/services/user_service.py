@@ -1,7 +1,11 @@
 from services.base_service import BaseService
 from infrastructure import UserRepository, db_helper, User
 from typing import AsyncGenerator
+<<<<<<< HEAD
 from schemas.user_schemas import RegisterUserSchema, CreateUserSchema, UserRole
+=======
+from schemas.user_schemas import RegisterUserSchema, CreateUserSchema
+>>>>>>> 8014b0036d036fb981c88b9696bec66cb2ed7b88
 from core.exceptions import NotFoundError, AlreadyExistsError
 from core.security.security import Security
 
@@ -19,7 +23,11 @@ class UserService(BaseService):
             last_name=user_data.last_name,
             email=user_data.email,
             phone_number=user_data.phone_number,
+<<<<<<< HEAD
             role=UserRole.user.value,
+=======
+            role=user_data.role.value,
+>>>>>>> 8014b0036d036fb981c88b9696bec66cb2ed7b88
             hashed_password=Security.hash_password(user_data.password),
         )
         return await self._user_repo.create(data=new_user)
