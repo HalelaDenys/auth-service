@@ -25,10 +25,10 @@ class RegisterUserSchema(BaseSchema):
         Optional[str], Field(max_length=15, min_length=7, description="Phone number")
     ] = None
 
-    # role: Annotated[
-    #     Optional[UserRole],
-    #     Field(description="Role"),
-    # ] = UserRole.user
+    role: Annotated[
+        Optional[UserRole],
+        Field(description="Role"),
+    ] = UserRole.user
 
     password: Annotated[str, Field(max_length=50, min_length=3, description="Password")]
 
