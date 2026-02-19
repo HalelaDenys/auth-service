@@ -21,5 +21,6 @@ RUN pip install --no-cache-dir uv \
 
 COPY src/ /app/src/
 COPY tests/ /app/tests/
+COPY entrypoint.sh /app/entrypoint.sh
 
-CMD ["sh", "-c", "uv run alembic -c src/alembic.ini upgrade head && uv run python src/main.py"]
+RUN chmod +x /app/entrypoint.sh

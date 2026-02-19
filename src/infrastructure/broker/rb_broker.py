@@ -3,9 +3,7 @@ from core import settings
 from faststream import FastStream
 from infrastructure.broker.routers.mailing_consumer import mailing_router
 
-broker = RabbitBroker(
-    url=str(settings.br.rabbit_url),
-)
+broker = RabbitBroker(url=settings.br.rabbit_dsn)
 
 app = FastStream(broker)
 

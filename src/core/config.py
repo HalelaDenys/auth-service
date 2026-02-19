@@ -61,8 +61,19 @@ class EmailConfig(BaseModel):
 
 class BrokerConfig(BaseModel):
     rabbit_url: AmqpDsn = "amqp://guest:guest@localhost:5672/"
+    rabbitmq_default_user: str = "guest"
+    rabbitmq_default_pass: str = "guest"
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = 5672
     enable_broker: bool = True
     with_real: bool = False
+
+    @property
+    def rabbit_dsn(self) -> str:
+        return (
+            f"amqp://{self.rabbitmq_default_user}:{self.rabbitmq_default_pass}@"
+            f"{self.rabbitmq_host}:{self.rabbitmq_port}/"
+        )
 
 
 class FrontendConfig(BaseModel):

@@ -5,26 +5,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres_db
-      - rabbitmq
+      postgres_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8000:8000"
-    command: >
-      sh -c "
-      echo 'Waiting 7 seconds before starting...';
-      sleep 7;
-    
-      echo 'Checking Postgres connection...';
-      while ! pg_isready -h ${APP_CONFIG__DB__POSTGRES_HOST} -U ${APP_CONFIG__DB__POSTGRES_USER} -d ${APP_CONFIG__DB__POSTGRES_DB}; do
-        echo 'Waiting for Postgres...';
-        sleep 1;
-      done;
-    
-      echo 'Postgres is ready!';
-      
-      uv run alembic -c src/alembic.ini upgrade head;
-      uv run python src/main.py
-      "
+    entrypoint: ["/app/entrypoint.sh"]
 
   postgres_db:
     image: postgres:15
