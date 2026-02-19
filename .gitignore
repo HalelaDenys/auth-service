@@ -11,4 +11,5 @@ venv/
 *.log
 
 *.env
+*.env.dev
 *ts.md

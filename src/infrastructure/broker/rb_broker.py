@@ -4,7 +4,7 @@ from faststream import FastStream
 from infrastructure.broker.routers.mailing_consumer import mailing_router
 
 broker = RabbitBroker(
-    url=settings.br.rabbit_url,
+    url=str(settings.br.rabbit_url),
 )
 
 app = FastStream(broker)

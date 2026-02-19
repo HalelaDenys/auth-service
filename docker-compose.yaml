@@ -1,6 +1,33 @@
 services:
+  api:
+    build: .
+    container_name: auth_service_api
+    env_file:
+      - .env
+    depends_on:
+      - postgres_db
+      - rabbitmq
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+      echo 'Waiting 7 seconds before starting...';
+      sleep 7;
+    
+      echo 'Checking Postgres connection...';
+      while ! pg_isready -h ${APP_CONFIG__DB__POSTGRES_HOST} -U ${APP_CONFIG__DB__POSTGRES_USER} -d ${APP_CONFIG__DB__POSTGRES_DB}; do
+        echo 'Waiting for Postgres...';
+        sleep 1;
+      done;
+    
+      echo 'Postgres is ready!';
+      
+      uv run alembic -c src/alembic.ini upgrade head;
+      uv run python src/main.py
+      "
+
   postgres_db:
-    image: postgres:16
+    image: postgres:15
     container_name: auth_db
     env_file:
       - .env
@@ -11,7 +38,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${APP_CONFIG__DB__POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${APP_CONFIG__DB__POSTGRES_USER} -d ${APP_CONFIG__DB__POSTGRES_DB}"]
       timeout: 5s
       interval: 10s
       retries: 5

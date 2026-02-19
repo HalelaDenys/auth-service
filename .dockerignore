@@ -1,0 +1,21 @@
+# виртуальное окружение
+.venv/
+
+# cache
+__pycache__/
+*.pyo
+
+# log
+*.log
+
+# git
+.git/
+.gitignore
+
+# env-file
+.env.dev
+.env
+
+# IDE
+.idea/
+.vscode/
