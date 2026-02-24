@@ -1,0 +1,56 @@
+stages:
+  - test
+
+image: python:3-11-slim
+
+services:
+  - name: postgres:15
+    alias: postgres_db
+  - name: rabbitmq:3-management-alpine
+    alias: rabbitmq
+
+variables:
+  # middleware
+  APP_CONFIG__MIDD__CORS_ALLOWED_ORIGINS='["http://localhost", "http://localhost:5173"]'
+  
+  # pastgres
+  APP_CONFIG__DB__POSTGRES_USER: auth_admin
+  APP_CONFIG__DB__POSTGRES_PASSWORD: auth_admin_password
+  APP_CONFIG__DB__POSTGRES_HOST: postgres_db
+  APP_CONFIG__DB__POSTGRES_PORT: 5432
+  APP_CONFIG__DB__POSTGRES_DB: auth_db
+  APP_CONFIG__DB__ECHO: False
+  
+  # AUTH JWT
+  APP_CONFIG__JWT__SECRET_KEY: 4b79047738c36e8c717a895e9fc2ba23759f3a9e7717e727e635fb592f43859a
+  APP_CONFIG__JWT__ACCESS_EXPIRE_DAY: 1
+  APP_CONFIG__JWT__REFRESH_EXPIRE_DAY: 10
+  APP_CONFIG__JWT__RESET_TOKEN_EXPIRE_MINUTE: 15
+  
+  APP_CONFIG__MODE: DEV
+
+  # RABBITMQ
+  APP_CONFIG__BR__RABBITMQ_DEFAULT_USER: guest
+  APP_CONFIG__BR__RABBITMQ_DEFAULT_PASS: guest
+  APP_CONFIG__BR__RABBITMQ_HOST: rabbitmq
+  APP_CONFIG__BR__RABBITMQ_PORT: 5672
+
+before_script:
+  - apt-get update && apt-get install -y gcc curl postgresql-client netcat
+  - pip install --upgrade pip
+  - pip install uv pytest
+
+  # синхронізація uv
+  - uv sync
+
+  # чекаємо Postgres
+  - until pg_isready -h $APP_CONFIG__DB__POSTGRES_HOST -U $APP_CONFIG__DB__POSTGRES_USER -d $APP_CONFIG__DB__POSTGRES_DB; do sleep 2; done
+  # чекаємо RabbitMQ
+  - until nc -z $APP_CONFIG__BR__RABBITMQ_HOST $APP_CONFIG__BR__RABBITMQ_PORT; do sleep 2; done
+  # 3. Міграції
+  - uv run alembic -c src/alembic.ini upgrade head
+
+test:
+  stage: test
+  script:
+    - uv run pytest

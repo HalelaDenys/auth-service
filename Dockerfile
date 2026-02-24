@@ -15,9 +15,8 @@ COPY pyproject.toml uv.lock* ./
 
 # 3. Ставим uv и зависимости в системный Python
 RUN pip install --no-cache-dir uv \
-    && UV_SYSTEM=true uv sync
-#    && uv sync --system
-
+    && uv sync
+#    && uv pip install --system --group dev -r pyproject.toml
 
 COPY src/ /app/src/
 COPY tests/ /app/tests/
