@@ -10,8 +10,6 @@ services:
     alias: rabbitmq
 
 variables:
-  # middleware
-  APP_CONFIG__MIDD__CORS_ALLOWED_ORIGINS='["http://localhost", "http://localhost:5173"]'
   
   # pastgres
   APP_CONFIG__DB__POSTGRES_USER: auth_admin

@@ -11,7 +11,7 @@ LOG_DEFAULT_FORMAT = (
 
 
 class MiddlewareConfig(BaseModel):
-    cors_allowed_origins: list[str]
+    cors_allowed_origins: list[str] = '["http://localhost", "http://localhost:5173"]'
 
 
 class DBConfig(BaseModel):
