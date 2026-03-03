@@ -1,8 +1,8 @@
-"""first mg
+"""create User model
 
-Revision ID: 365f0dbd6ac6
+Revision ID: 7ae82d5aade4
 Revises:
-Create Date: 2026-01-20 15:45:47.714992
+Create Date: 2026-03-03 12:51:09.119837
 
 """
 
@@ -11,7 +11,8 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "365f0dbd6ac6"
+# revision identifiers, used by Alembic.
+revision: str = "7ae82d5aade4"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -20,7 +21,6 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("first_name", sa.VARCHAR(length=50), nullable=False),
         sa.Column("last_name", sa.VARCHAR(length=50), nullable=True),
         sa.Column("email", sa.VARCHAR(length=100), nullable=False),
@@ -34,6 +34,7 @@ def upgrade() -> None:
         ),
         sa.Column("is_active", sa.Boolean(), server_default="true", nullable=False),
         sa.Column("is_verified", sa.Boolean(), server_default="false", nullable=False),
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),

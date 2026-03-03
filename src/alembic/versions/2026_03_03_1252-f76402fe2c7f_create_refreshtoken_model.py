@@ -1,8 +1,8 @@
-"""added the RefreshToken model
+"""create RefreshToken model
 
-Revision ID: feb69ed5c8fe
-Revises: 365f0dbd6ac6
-Create Date: 2026-01-28 18:04:15.525849
+Revision ID: f76402fe2c7f
+Revises: 7ae82d5aade4
+Create Date: 2026-03-03 12:52:05.572822
 
 """
 
@@ -12,8 +12,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = "feb69ed5c8fe"
-down_revision: Union[str, Sequence[str], None] = "365f0dbd6ac6"
+revision: str = "f76402fe2c7f"
+down_revision: Union[str, Sequence[str], None] = "7ae82d5aade4"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -21,10 +21,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "refresh_tokens",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("jti", sa.String(), nullable=False),
         sa.Column("expires_at", sa.TIMESTAMP(timezone=True), nullable=False),
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),
