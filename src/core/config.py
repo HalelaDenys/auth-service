@@ -44,6 +44,7 @@ class AuthConfig(BaseModel):
     refresh_expire_day: int
     algorithm: str = "HS256"
     reset_token_expire_minute: int
+    verify_token_expire_minute: int
 
 
 class EmailConfig(BaseModel):
