@@ -1,4 +1,4 @@
-from schemas.base_schemas import BaseSchema
+from schemas.base_schemas import BaseSchema, TokenTypeEnum
 from pydantic import Field, EmailStr
 from typing import Annotated
 from datetime import datetime
@@ -13,20 +13,6 @@ class TokenSchema(BaseSchema):
     access_token: str
     refresh_token: str | None = None
     token_type: str = "Bearer"
-
-
-class CreateTokenSchema(BaseSchema):
-    user_id: int
-    expires_at: datetime
-
-
-class CreateRefreshTokenSchema(CreateTokenSchema):
-    jti: str
-
-
-class CreateResetPasswordTokenSchema(CreateTokenSchema):
-    lookup_hash: str
-    hashed_token: str
 
 
 class ResetPasswordRequestSchema(BaseSchema):
@@ -47,4 +33,8 @@ class ChangePasswordSchema(NewPasswordSchema):
 
 class ResetPasswordEmailPayloadBroker(BaseSchema):
     email: EmailStr | str
+    token: str
+
+
+class VerifyEmailToken(BaseSchema):
     token: str

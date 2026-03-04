@@ -1,14 +1,7 @@
-from enum import StrEnum
-
-from schemas.base_schemas import BaseSchema, BaseReadSchema
+from schemas.base_schemas import BaseSchema, BaseReadSchema, UserRole
 import re
 from pydantic import Field, field_validator, EmailStr
 from typing import Annotated, Optional
-
-
-class UserRole(StrEnum):
-    user = "user"
-    admin = "admin"
 
 
 class RegisterUserSchema(BaseSchema):
@@ -50,16 +43,3 @@ class ReadUserSchema(BaseReadSchema):
     email: EmailStr | str
     phone_number: str | None
     role: UserRole | str
-
-
-class CreateUserSchema(BaseSchema):
-    first_name: str
-    last_name: Optional[str] = None
-    email: EmailStr | str
-    phone_number: Optional[str] = None
-    role: Optional[UserRole | str] = (UserRole.user,)
-    hashed_password: str
-
-
-class UpdateUserPassSchema(BaseSchema):
-    hashed_password: str
