@@ -1,11 +1,12 @@
-from typing import TypeVar, Generic, Type, Union, Sequence
+from typing import TypeVar, Generic, Type, Union, TypeAlias
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete as delete_sql, update as update_sql
 from pydantic import BaseModel
-
+from dataclasses import is_dataclass, asdict
 from infrastructure import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
+DataType: TypeAlias = Union[BaseModel, object]
 
 
 class BaseSqlalchemyRepo(Generic[ModelType]):
@@ -13,20 +14,30 @@ class BaseSqlalchemyRepo(Generic[ModelType]):
         self._model = model
         self._session = session
 
-    async def create(self, data: BaseModel) -> ModelType:
-        obj = self._model(**data.model_dump())
+    @staticmethod
+    def _dump_data(data: DataType) -> dict:
+        if isinstance(data, BaseModel):
+            return data.model_dump()
+        if is_dataclass(data):
+            return asdict(data)
+        raise TypeError("data must be pydantic model or dataclass")
+
+    async def create(self, data: DataType) -> ModelType:
+        payload = self._dump_data(data)
+        obj = self._model(**payload)
         self._session.add(obj)
         await self._session.flush()
         await self._session.refresh(obj)
         return obj
 
-    async def update(self, data: BaseModel, **filters) -> ModelType | None:
+    async def update(self, data: DataType, **filters) -> ModelType | None:
+        payload = self._dump_data(data)
         stmt = (
             update_sql(self._model)
             .where(
                 *[getattr(self._model, key) == value for key, value in filters.items()],
             )
-            .values(**data.model_dump())
+            .values(**payload)
             .returning(self._model.id)
         )
 
