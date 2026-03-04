@@ -90,7 +90,7 @@ class Security:
         )
 
     @staticmethod
-    def generate_reset_token() -> str:
+    def generate_token() -> str:
         return secrets.token_urlsafe(32)
 
     @staticmethod
