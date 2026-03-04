@@ -3,6 +3,6 @@ from infrastructure import RefreshToken
 from infrastructure.repo.base_sqlalchemy_repo import BaseSqlalchemyRepo
 
 
-class TokenRepository(BaseSqlalchemyRepo[RefreshToken]):
+class RefreshTokenRepository(BaseSqlalchemyRepo[RefreshToken]):
     def __init__(self, session: AsyncSession):
         super().__init__(RefreshToken, session)
