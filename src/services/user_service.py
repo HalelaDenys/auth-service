@@ -1,7 +1,8 @@
+from dto.user_dto import CreateUserDTO
 from services.base_service import BaseService
 from infrastructure import UserRepository, db_helper, User
 from typing import AsyncGenerator
-from schemas.user_schemas import RegisterUserSchema, CreateUserSchema, UserRole
+from schemas.user_schemas import RegisterUserSchema, UserRole
 from core.exceptions import NotFoundError, AlreadyExistsError
 from core.security.security import Security
 
@@ -14,7 +15,7 @@ class UserService(BaseService):
         if await self._user_repo.find_single(email=user_data.email):
             raise AlreadyExistsError("User already exists")
 
-        new_user = CreateUserSchema(
+        new_user = CreateUserDTO(
             first_name=user_data.first_name,
             last_name=user_data.last_name,
             email=user_data.email,
