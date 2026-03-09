@@ -21,7 +21,7 @@ def get_current_token_payload(
 
     try:
         payload = Security.decode_token(token=token)
-    except JWTError:
+    except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return payload
 
