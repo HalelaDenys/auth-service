@@ -1,11 +1,12 @@
-from schemas.user_schemas import UpdateUserPassSchema
 from datetime import datetime, timedelta, timezone
+from schemas.base_schemas import TokenTypeEnum
 from typing import AsyncGenerator, Annotated
 from core import settings, Security
+from dto import auth_dto, user_dto
 from fastapi import Depends, Form
 from infrastructure import (
-    PasswordResetTokenRepository,
-    TokenRepository,
+    UserTokenRepository,
+    RefreshTokenRepository,
     UserRepository,
     RefreshToken,
     db_helper,
@@ -20,13 +21,13 @@ import uuid
 class AuthService:
     def __init__(
         self,
-        refresh_token_repo: TokenRepository,
+        refresh_token_repo: RefreshTokenRepository,
         user_repo: UserRepository,
-        reset_token_repo: PasswordResetTokenRepository,
+        user_token_repo: UserTokenRepository,
     ):
-        self._token_repo: TokenRepository = refresh_token_repo
+        self._token_repo: RefreshTokenRepository = refresh_token_repo
         self._user_repo: UserRepository = user_repo
-        self._reset_token_repo: PasswordResetTokenRepository = reset_token_repo
+        self._user_token_repo: UserTokenRepository = user_token_repo
 
     async def authenticate_user(
         self,
@@ -58,7 +59,7 @@ class AuthService:
         )
 
         await self._token_repo.create(
-            auth_schemas.CreateRefreshTokenSchema(
+            auth_dto.CreateRefreshTokenDTO(
                 user_id=user_data.id,
                 jti=refresh_token_jti,
                 expires_at=datetime.now(timezone.utc)
@@ -104,30 +105,23 @@ class AuthService:
         return token
 
     async def create_reset_token(self, email: str) -> None:
+        await self._user_token_repo.delete_expired_tokens()
+
         if not (user := await self._user_repo.find_single(email=email)):
             return
 
-        raw_token = Security.generate_reset_token()
-
-        lookup_hash = Security.hash_token_sha256(token=raw_token)
-        hashed_token = Security.hash_password(raw_token)
-        expire_at = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.jwt.reset_token_expire_minute
+        token_data = self._generate_user_token(
+            expire_minute=settings.jwt.reset_token_expire_minute
         )
 
-        await self._reset_token_repo.create(
-            auth_schemas.CreateResetPasswordTokenSchema(
-                user_id=user.id,
-                lookup_hash=lookup_hash,
-                hashed_token=hashed_token,
-                expires_at=expire_at,
-            )
+        await self._save_user_token(
+            user=user, token_data=token_data, token_type=TokenTypeEnum.reset_password
         )
 
         await broker.publish(
             auth_schemas.ResetPasswordEmailPayloadBroker(
                 email=user.email,
-                token=raw_token,
+                token=token_data.raw_token,
             ),
             queue="password-reset-request",
         )
@@ -135,15 +129,17 @@ class AuthService:
     async def reset_password(
         self, data: auth_schemas.ResetPasswordConfirmSchema
     ) -> None:
+        await self._user_token_repo.delete_expired_tokens()
+
         lookup_hash = Security.hash_token_sha256(token=data.token)
 
-        reset_token = await self._reset_token_repo.find_single(lookup_hash=lookup_hash)
+        reset_token = await self._user_token_repo.find_single(lookup_hash=lookup_hash)
 
         if not reset_token:
             raise exceptions.unauthorized_exc_inactive_token()
 
         if reset_token.expires_at < datetime.now(timezone.utc):
-            await self._reset_token_repo.delete(id=reset_token.id)
+            await self._user_token_repo.delete(id=reset_token.id)
             raise exceptions.unauthorized_exc_inactive_token()
 
         if not Security.verify_password(data.token, reset_token.hashed_token):
@@ -152,7 +148,7 @@ class AuthService:
         if not (user := await self._user_repo.find_single(id=reset_token.user_id)):
             raise exceptions.unauthorized_exc_inactive_token()
 
-        await self._reset_token_repo.delete(id=reset_token.id)
+        await self._user_token_repo.delete(id=reset_token.id)
         await self.update_user_password(user_id=user.id, new_password=data.new_password)
 
     async def change_password(
@@ -166,25 +162,80 @@ class AuthService:
         # full logout user
         await self._token_repo.delete(user_id=user.id)
 
+    async def create_verify_email_token(self, user: User) -> None:
+        await self._user_token_repo.delete_expired_tokens()
+
+        if not (user := await self._user_repo.find_single(email=user.email)):
+            return
+
+        token_data = self._generate_user_token(
+            expire_minute=settings.jwt.verify_token_expire_minute
+        )
+
+        await self._save_user_token(
+            user=user, token_data=token_data, token_type=TokenTypeEnum.verify_email
+        )
+
+        await broker.publish(
+            auth_schemas.VerifyEmailPayloadBroker(
+                email=user.email,
+                token=token_data.raw_token,
+            ),
+            queue="verify-email-request",
+        )
+
+    async def confirm_verify_email(self, data: auth_schemas.VerifyEmailToken):
+        await self._user_token_repo.delete_expired_tokens()
+
     async def update_user_password(self, user_id: int, new_password: str) -> None:
         new_hashed_password = Security.hash_password(password=new_password)
         await self._user_repo.update(
-            UpdateUserPassSchema(
+            user_dto.UpdateUserPassDTO(
                 hashed_password=new_hashed_password,
             ),
             id=user_id,
         )
 
+    async def _save_user_token(
+        self,
+        user: User,
+        token_data: auth_dto.UserTokenDTO,
+        token_type: TokenTypeEnum,
+    ) -> None:
+        await self._user_token_repo.create(
+            auth_dto.CreateUserTokenDTO(
+                user_id=user.id,
+                lookup_hash=token_data.lookup_hash,
+                hashed_token=token_data.hashed_token,
+                expires_at=token_data.expires_at,
+                token_type=token_type,
+            )
+        )
+
+    @staticmethod
+    def _generate_user_token(expire_minute: int) -> auth_dto.UserTokenDTO:
+        raw_token = Security.generate_token()
+        lookup_hash = Security.hash_token_sha256(token=raw_token)
+        hashed_token = Security.hash_password(raw_token)
+        expire_at = datetime.now(timezone.utc) + timedelta(minutes=expire_minute)
+
+        return auth_dto.UserTokenDTO(
+            raw_token=raw_token,
+            lookup_hash=lookup_hash,
+            hashed_token=hashed_token,
+            expires_at=expire_at,
+        )
+
 
 async def get_auth_service() -> AsyncGenerator[AuthService, None]:
     async with db_helper.get_session() as session:
-        token_repo = TokenRepository(session)
+        token_repo = RefreshTokenRepository(session)
         user_repo = UserRepository(session)
-        reset_token = PasswordResetTokenRepository(session)
+        reset_token = UserTokenRepository(session)
         yield AuthService(
             refresh_token_repo=token_repo,
             user_repo=user_repo,
-            reset_token_repo=reset_token,
+            user_token_repo=reset_token,
         )
 
 

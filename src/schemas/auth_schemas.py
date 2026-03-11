@@ -38,3 +38,7 @@ class ResetPasswordEmailPayloadBroker(BaseSchema):
 
 class VerifyEmailToken(BaseSchema):
     token: str
+
+
+class VerifyEmailPayloadBroker(VerifyEmailToken):
+    email: EmailStr | str
