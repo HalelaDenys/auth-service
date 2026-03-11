@@ -75,12 +75,49 @@ class EmailManager:
             "reset_url": full_url,
         }
         html_content = template.render(context)
-        await self._send_email(
-            recipient=email_recipient,
-            subject=subject,
-            plain_content=plain_content,
-            html_content=html_content,
-        )
+        try:
+            await self._send_email(
+                recipient=email_recipient,
+                subject=subject,
+                plain_content=plain_content,
+                html_content=html_content,
+            )
+        except aiosmtplib.SMTPException as e:
+            log.error("Email send reset pass failed: %s", str(e))
+
+    async def send_email_verify(
+        self, email_recipient: str, varify_token: str, varify_url: str = ""
+    ):
+        subject = "Email verification"
+        full_url = f"{varify_url}?token={varify_token}"
+
+        plain_content = dedent(f"""\
+            Dear {email_recipient},
+
+            Please follow the link to verify email {full_url}
+
+            If you did not request a verify email, you can safely ignore this email.
+
+            Your site admin
+            ℗ 2026.   
+            """)
+
+        template = templates.get_template("mailing/verify-email-request.html")
+
+        context = {
+            "email": email_recipient,
+            "reset_url": full_url,
+        }
+        html_content = template.render(context)
+        try:
+            await self._send_email(
+                recipient=email_recipient,
+                subject=subject,
+                plain_content=plain_content,
+                html_content=html_content,
+            )
+        except aiosmtplib.SMTPException as e:
+            log.error("Email send verify-email failed: %s", str(e))
 
 
 async def get_email_manager() -> AsyncGenerator[EmailManager, None]:

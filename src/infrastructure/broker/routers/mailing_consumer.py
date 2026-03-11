@@ -1,7 +1,10 @@
 from faststream.rabbit import RabbitRouter
 from faststream import Depends
 
-from schemas.auth_schemas import ResetPasswordEmailPayloadBroker
+from schemas.auth_schemas import (
+    ResetPasswordEmailPayloadBroker,
+    VerifyEmailPayloadBroker,
+)
 from infrastructure import EmailManager, get_email_manager
 from typing import Annotated
 from core import settings
@@ -18,4 +21,16 @@ async def password_reset_request_notifications(
         email_recipient=data.email,
         reset_token=data.token,
         reset_url=settings.fron.reset_password_url,
+    )
+
+
+@mailing_router.subscriber(queue="verify-email-request")
+async def verify_email_request_notifications(
+    data: VerifyEmailPayloadBroker,
+    email_manager: Annotated["EmailManager", Depends(get_email_manager)],
+):
+    await email_manager.send_email_verify(
+        email_recipient=data.email,
+        varify_token=data.token,
+        varify_url=settings.fron.email_verify_url,
     )

@@ -11,7 +11,10 @@ LOG_DEFAULT_FORMAT = (
 
 
 class MiddlewareConfig(BaseModel):
-    cors_allowed_origins: list[str] = '["http://localhost", "http://localhost:5173"]'
+    cors_allowed_origins: list[str] = [
+        "http://localhost",
+        "http://localhost:5173",
+    ]
 
 
 class DBConfig(BaseModel):
@@ -79,6 +82,9 @@ class BrokerConfig(BaseModel):
 
 class FrontendConfig(BaseModel):
     reset_password_url: str = "http://0.0.0.0:8000/view/reset"
+    email_verify_url: str = (
+        "http://0.0.0.0:8000/docs#/Auth/confirm_email_api_v1_auth_verify_email_confirm_post"
+    )
 
 
 class LoggingConfig(BaseModel):
